@@ -21,6 +21,7 @@ namespace IdentityServerTokenAuth.Controllers
     public class AuthenticationController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
@@ -69,7 +70,17 @@ namespace IdentityServerTokenAuth.Controllers
 
             if (result.Succeeded)
             {
-                
+                switch (registerVM.Role)
+                {
+                    case UserRoles.Manager:
+                        await _userManager.AddToRoleAsync(newUser, UserRoles.Manager);
+                        break;
+                    case UserRoles.Student:
+                        await _userManager.AddToRoleAsync(newUser, UserRoles.Student);
+                        break;
+                    default:
+                        break;
+                }
                 return BaseResponse<ApplicationUser>.returnSuccess(newUser,$"Welcome {newUser.FirstName}");
             }
             else
@@ -95,13 +106,21 @@ namespace IdentityServerTokenAuth.Controllers
             }
 
             var userExists = await _userManager.FindByEmailAsync(loginVM.EmailAddress);
+    
             if (userExists != null && await _userManager.CheckPasswordAsync(userExists,loginVM.Password))
             {
                 var tokenValue = await GenerateJWTTokenAsync(userExists,null);
-                return new BaseResponse<ApplicationUser>
+                var result = await _signInManager.PasswordSignInAsync(userExists,loginVM.Password,false,false);
+                if (result.Succeeded)
                 {
-                    authResult = tokenValue
-                };
+                    return new BaseResponse<ApplicationUser>
+                    {
+                        authResult = tokenValue,
+                        StatusCode=System.Net.HttpStatusCode.OK
+                    };
+
+                }
+             
             }
 
             return BaseResponse<ApplicationUser>.returnUnauthorized();
@@ -156,6 +175,14 @@ namespace IdentityServerTokenAuth.Controllers
                  new Claim(JwtRegisteredClaimNames.Sub,user.Email),
                  new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString())
              };
+
+            //Add user role claims
+
+            var userRoles = await _userManager.GetRolesAsync(user);
+            foreach (var userRole in userRoles)
+            {
+                authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+            }
 
             var authSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["JWT:Secret"]));
 

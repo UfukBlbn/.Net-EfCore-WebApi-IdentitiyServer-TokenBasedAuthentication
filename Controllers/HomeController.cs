@@ -11,7 +11,7 @@ namespace IdentityServerTokenAuth.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    [Authorize]
+    //[Authorize(Roles =UserRoles.Manager+","+UserRoles.Manager)]
     public class HomeController : ControllerBase
     {
         public HomeController()
