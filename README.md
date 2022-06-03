@@ -7,7 +7,7 @@ I created a project that has a "Token Based Authentication", and also the projec
 
 ![image](https://user-images.githubusercontent.com/71414017/171815545-c0bfbee0-2086-44f3-b4a1-5c3e6177ab84.png)
 
---> Description 
+--> `Description: `
   JSON Web Token (JWT) is an open standard (RFC 7519) that defines a compact and self-contained way for securely transmitting information between parties as a JSON object. This information can be verified and trusted because it is digitally signed. JWTs can be signed using a secret (with the HMAC algorithm) or a public/private key pair using RSA or ECDSA.
 
 `Why we have to use JWT Based Authentication for more security`
